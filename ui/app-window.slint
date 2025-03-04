@@ -58,6 +58,7 @@ export component MainWindow inherits Window {
     callback check_if_pair_solved();
     in property <bool> disable_tiles;
     callback increment_counter();
+    callback play_sound();
     in-out property <int> clicks;
     in property <int> counter;
     in property <[TileData]> memory_tiles: [
@@ -81,6 +82,7 @@ export component MainWindow inherits Window {
         clicked => {
             if (!root.disable_tiles) {
                 tile.image-visible = true;
+                root.play_sound();
                 root.check_if_pair_solved();
                 root.clicks = root.clicks + 1;
                 root.increment_counter();

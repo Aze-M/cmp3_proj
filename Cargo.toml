@@ -8,7 +8,7 @@ anyhow = "1.0.96"
 cpal = "0.15.3"
 rand = "0.8"
 slint = "1.9.2"
-symphonia = "0.5.4"
+symphonia = { version = "0.5.4", features = ["mpa"] }
 
 [build-dependencies]
 slint-build = "1.9.2"

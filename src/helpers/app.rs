@@ -1,18 +1,37 @@
 use anyhow::Result;
 use rand::seq::SliceRandom;
 use slint::Model;
+use std::env;
+use std::fs;
+use std::fs::File;
+use std::path::Path;
 use std::sync::Mutex;
 
 use crate::*;
 use crate::helpers::audio::AudioEngine;
 
 #[allow(unused, unused_variables)]
-pub struct App;
+pub struct App {
+}
 
 #[allow(unused, unused_variables)]
 impl App {
-    pub fn run(ae: Option<&Mutex<AudioEngine>>) -> Result<()> {
+    pub fn run() -> Result<()> {
         let main_window = MainWindow::new()?;
+        let ae = AudioEngine::get_instance();
+
+        //preload sound file.
+        let mut sound_path = env::current_dir()?.to_string_lossy().to_string()
+        + "\\ui\\sfx\\click.mp3";
+        println!("{:?}", sound_path);
+        let sound_file = File::open(sound_path)?;
+
+        println!("{:?}", sound_file);
+
+        //predecode sound file and keep loaded.
+        let mut ae_lock = ae.lock().unwrap();
+        let mut sound = ae_lock.decode(sound_file)?;
+        drop(ae_lock);
 
         //get memory tiles defined in the slint file
         let mut tiles: Vec<TileData> = main_window.get_memory_tiles().iter().collect();
@@ -26,8 +45,8 @@ impl App {
         let tiles_model = std::rc::Rc::new(slint::VecModel::from(tiles));
         main_window.set_memory_tiles(tiles_model.clone().into());
 
+        //pair checks
         let main_window_weakptr = main_window.as_weak();
-
         main_window.on_check_if_pair_solved(move || {
             let mut flipped_tiles = tiles_model
                 .iter()
@@ -61,7 +80,6 @@ impl App {
 
         // this pointer was claimed earlier so we need another definition here
         let main_window_weakptr = main_window.as_weak();
-
         main_window.on_increment_counter(move || {
             let main_window = main_window_weakptr.unwrap();
 
@@ -72,6 +90,17 @@ impl App {
             let counter = clicks / 2;
 
             main_window.set_counter(counter);
+        });
+
+        //play sound on clicked tile;
+        main_window.on_play_sound(move || {
+            let ae = AudioEngine::get_instance();
+            let ae_lock = ae.lock().unwrap();
+
+            let mut sound_path = env::current_dir().unwrap().to_string_lossy().to_string()
+            + "\\ui\\sfx\\click.mp3";
+
+            ae_lock.decode_and_play( Path::new(&sound_path) );
         });
 
         // always last
