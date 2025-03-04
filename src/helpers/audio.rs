@@ -1,13 +1,12 @@
 use anyhow::Result;
 use cpal::{
     traits::{DeviceTrait, HostTrait, StreamTrait},
-    Device, Host, Sample, Stream, StreamConfig, StreamError,
+    Device, Host, StreamConfig, StreamError,
 };
 use std::{
     fs::File,
     path::Path,
-    sync::{Arc, LazyLock as Lazy, Mutex, OnceLock},
-    thread,
+    sync::{Arc, LazyLock as Lazy, Mutex, OnceLock}
 };
 use symphonia::{
     core::{
