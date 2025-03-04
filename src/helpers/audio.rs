@@ -1,12 +1,13 @@
 use anyhow::Result;
 use cpal::{
     traits::{DeviceTrait, HostTrait, StreamTrait},
-    Device, Host, StreamConfig, StreamError,
+    Device, Host, Sample, Stream, StreamConfig, StreamError,
 };
 use std::{
+    thread,
     fs::File,
     path::Path,
-    sync::{Arc, LazyLock as Lazy, Mutex, OnceLock}
+    sync::{Arc, LazyLock as Lazy, Mutex, OnceLock},
 };
 use symphonia::{
     core::{
@@ -21,11 +22,12 @@ use symphonia::{
 
 static AUDIO_BUFFER: Lazy<Arc<Mutex<Vec<f32>>>> = Lazy::new(|| Arc::new(Mutex::new(Vec::new())));
 static mut VOLUME: f32 = 1.0;
+static mut GLOBAL_STREAM: Option<Stream> = None;
 
 pub struct AudioEngine {
     pub host: Host,
     output: Option<Device>,
-    config: Option<StreamConfig>
+    config: Option<StreamConfig>,
 }
 
 //less yellow lines :)
@@ -57,14 +59,19 @@ impl AudioEngine {
 
             self.config = Some(conf_temp.into());
 
-            /*
             let stream = self.output.as_ref().unwrap().build_output_stream(
                 &self.config.as_ref().unwrap(),
-                move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {},
+                write::<f32>,
                 stream_error,
                 None,
-            );
-            */
+            )?;
+
+            stream.play();
+
+            //no more creating new streams, anything written to the audio buffer is played in order.
+            unsafe {
+                GLOBAL_STREAM = Some(stream);
+            }
         }
 
         println!("Engine Initialized.");
@@ -116,19 +123,20 @@ impl AudioEngine {
         //used for locking ot ensure full audio plays.
         let mut totalpacks = 0;
 
-        //thread::spawn(move || {
-        while let Ok(packet) = formatreader.next_packet() {
-            totalpacks += 1;
-            if let Ok(decoded) = decoder.decode(&packet) {
-                if let AudioBufferRef::F32(packet_buffer) = decoded {
-                    let mut buf_lock = buffer_clone.lock().unwrap();
-                    buf_lock.extend_from_slice(packet_buffer.chan(0));
+        thread::spawn(move || {
+            while let Ok(packet) = formatreader.next_packet() {
+                totalpacks += 1;
+                if let Ok(decoded) = decoder.decode(&packet) {
+                    if let AudioBufferRef::F32(packet_buffer) = decoded {
+                        let mut buf_lock = buffer_clone.lock().unwrap();
+                        buf_lock.extend_from_slice(packet_buffer.chan(0));
+                    }
                 }
             }
-        }
-        println!("Total Packets read: {:?}", totalpacks);
-        //});
+            println!("Total Packets read: {:?}", totalpacks);
+        });
 
+        /*
         let buffer_clone = Arc::clone(&AUDIO_BUFFER);
         let stream = self.output.as_ref().unwrap().build_output_stream(
             &self.config.as_ref().unwrap(),
@@ -151,10 +159,9 @@ impl AudioEngine {
 
         stream.play();
 
-        let buffer_clone = Arc::clone( &AUDIO_BUFFER); 
-        while !buffer_clone.lock().unwrap().is_empty() {
-
-        }
+        let buffer_clone = Arc::clone(&AUDIO_BUFFER);
+        while !buffer_clone.lock().unwrap().is_empty() {}
+        */
 
         return Ok(());
     }
@@ -188,6 +195,7 @@ impl AudioEngine {
         let mut decoder = codexreg.make(&track.codec_params, &DecoderOptions::default())?;
 
         let buffer_clone = Arc::clone(&AUDIO_BUFFER);
+
         //locks thread to decode entire file, should really be using thread but that has it's own issues, change later
         while let Ok(packet) = reader.next_packet() {
             if let Ok(decoded) = decoder.decode(&packet) {
@@ -208,8 +216,8 @@ pub fn test() {
 }
 
 // has to stay out of AE class to ensure availability globally, singleton ensures this is never used anyways.
-/*fn write<T: Sample>(data: &mut [f32], _: &cpal::OutputCallbackInfo) {
-    println!("callback happened");
+fn write<T: Sample>(data: &mut [f32], _: &cpal::OutputCallbackInfo) {
+    println!("Callback happened!");
     let mut buffer_lock = AUDIO_BUFFER.lock().unwrap();
 
     for sample in data.iter_mut() {
@@ -223,7 +231,6 @@ pub fn test() {
         }
     }
 }
-*/
 
 fn stream_error(err: StreamError) {
     println!("Output stream errored: {:?}", err);

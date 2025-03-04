@@ -53,6 +53,7 @@ component MemoryTile inherits Rectangle {
 }
 
 export component MainWindow inherits Window {
+    title: "Match game";
     width: (74px * 3) + 64px;
     height: (74px * 3) + 96px;
     callback check_if_pair_solved();
@@ -81,7 +82,7 @@ export component MainWindow inherits Window {
         solved: tile.solved;
         clicked => {
             if (!root.disable_tiles) {
-                
+
                 if (!tile.image-visible) {
                     root.play_sound();
                     tile.image-visible = true;
