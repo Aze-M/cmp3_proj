@@ -2,10 +2,8 @@ use anyhow::Result;
 use rand::seq::SliceRandom;
 use slint::Model;
 use std::env;
-use std::fs;
 use std::fs::File;
 use std::path::Path;
-use std::sync::Mutex;
 
 use crate::*;
 use crate::helpers::audio::AudioEngine;
