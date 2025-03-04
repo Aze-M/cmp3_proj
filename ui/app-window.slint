@@ -81,8 +81,12 @@ export component MainWindow inherits Window {
         solved: tile.solved;
         clicked => {
             if (!root.disable_tiles) {
-                tile.image-visible = true;
-                root.play_sound();
+                
+                if (!tile.image-visible) {
+                    root.play_sound();
+                    tile.image-visible = true;
+                }
+
                 root.check_if_pair_solved();
                 root.clicks = root.clicks + 1;
                 root.increment_counter();
