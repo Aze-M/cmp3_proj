@@ -86,12 +86,19 @@ impl App {
             // update move counter to clicks / 2 (as we update moves every time a pair has been clicked)
             let counter = clicks / 2;
 
-            if clicks > 10 {
+            if clicks > 10 && clicks < 20 {
                 let ae = AudioEngine::get_instance();
                 let ae_lock = ae.lock().unwrap();
 
-                ae_lock.toggle_pause();
+                ae_lock.pause();
+                ae_lock.flushbuffer();
+            } else if clicks > 20 {
+                let ae = AudioEngine::get_instance();
+                let ae_lock = ae.lock().unwrap();
+
+                ae_lock.unpause();
             }
+
 
             main_window.set_counter(counter);
         });

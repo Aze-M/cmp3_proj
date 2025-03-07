@@ -218,7 +218,7 @@ impl AudioEngine {
         let pause_clone = Arc::clone(&PAUSED);
         let mut pcl = pause_clone.lock().unwrap();
 
-        *pcl = !*pcl;
+        *pcl = true;
         println!("Toggled Pause of sound: {:?}", *pcl)
     }
 
@@ -226,7 +226,7 @@ impl AudioEngine {
         let pause_clone = Arc::clone(&PAUSED);
         let mut pcl = pause_clone.lock().unwrap();
 
-        *pcl = !*pcl;
+        *pcl = false;
         println!("Toggled Pause of sound: {:?}", *pcl)
     }
 
