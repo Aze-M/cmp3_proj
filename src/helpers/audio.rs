@@ -120,12 +120,8 @@ impl AudioEngine {
         //spawns a thread to read the entire file and stream the contents to the audio engine
         println!("Beginning file read.");
 
-        //used for locking ot ensure full audio plays.
-        let mut totalpacks = 0;
-
         thread::spawn(move || {
             while let Ok(packet) = formatreader.next_packet() {
-                totalpacks += 1;
                 if let Ok(decoded) = decoder.decode(&packet) {
                     if let AudioBufferRef::F32(packet_buffer) = decoded {
                         let mut buf_lock = buffer_clone.lock().unwrap();
@@ -133,7 +129,7 @@ impl AudioEngine {
                     }
                 }
             }
-            println!("Total Packets read: {:?}", totalpacks);
+
         });
 
         /*
