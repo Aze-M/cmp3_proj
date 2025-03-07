@@ -23,6 +23,7 @@ use symphonia::{
 static AUDIO_BUFFER: Lazy<Arc<Mutex<Vec<f32>>>> = Lazy::new(|| Arc::new(Mutex::new(Vec::new())));
 static mut VOLUME: f32 = 1.0;
 static mut GLOBAL_STREAM: Option<Stream> = None;
+static PAUSED: Lazy<Arc<Mutex<bool>>> = Lazy::new(|| Arc::new(Mutex::new(false)));
 
 pub struct AudioEngine {
     pub host: Host,
@@ -204,6 +205,38 @@ impl AudioEngine {
 
         return Ok(());
     }
+
+    pub fn toggle_pause(&self) {
+        let pause_clone = Arc::clone(&PAUSED);
+        let mut pcl = pause_clone.lock().unwrap();
+
+        *pcl = !*pcl;
+        println!("Toggled Pause of sound: {:?}", *pcl)
+    }
+
+    pub fn pause(&self) {
+        let pause_clone = Arc::clone(&PAUSED);
+        let mut pcl = pause_clone.lock().unwrap();
+
+        *pcl = !*pcl;
+        println!("Toggled Pause of sound: {:?}", *pcl)
+    }
+
+    pub fn unpause(&self) {
+        let pause_clone = Arc::clone(&PAUSED);
+        let mut pcl = pause_clone.lock().unwrap();
+
+        *pcl = !*pcl;
+        println!("Toggled Pause of sound: {:?}", *pcl)
+    }
+
+    //empties the buffer
+    pub fn flushbuffer(&self) {
+        let buffer_clone = Arc::clone(&AUDIO_BUFFER);
+        let mut bcl = buffer_clone.lock().unwrap();
+
+        *bcl = Vec::new();
+    }
 }
 
 #[allow(unused)]
@@ -213,12 +246,13 @@ pub fn test() {
 
 // has to stay out of AE class to ensure availability globally, singleton ensures this is never used anyways.
 fn write<T: Sample>(data: &mut [f32], _: &cpal::OutputCallbackInfo) {
-    println!("Callback happened!");
     let mut buffer_lock = AUDIO_BUFFER.lock().unwrap();
+    let pause_clone = Arc::clone(&PAUSED);
+    let pcl = pause_clone.lock().unwrap();
 
     for sample in data.iter_mut() {
-        if !buffer_lock.is_empty() {
-            //unsafe because of volume multiplier, volume should only ever be modified by locking code so it's aight.
+        if !buffer_lock.is_empty() && *pcl == false {
+            //unsafe because of volume multiplier, volume is only ever modified outside of this function so the thread will be fine.
             unsafe {
                 *sample = buffer_lock.remove(0) * VOLUME;
             }

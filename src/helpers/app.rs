@@ -5,12 +5,11 @@ use std::env;
 use std::fs::File;
 use std::path::Path;
 
-use crate::*;
 use crate::helpers::audio::AudioEngine;
+use crate::*;
 
 #[allow(unused, unused_variables)]
-pub struct App {
-}
+pub struct App {}
 
 #[allow(unused, unused_variables)]
 impl App {
@@ -19,8 +18,8 @@ impl App {
         let ae = AudioEngine::get_instance();
 
         //preload sound file.
-        let mut sound_path = env::current_dir()?.to_string_lossy().to_string()
-        + "\\ui\\sfx\\click.mp3";
+        let mut sound_path =
+            env::current_dir()?.to_string_lossy().to_string() + "\\ui\\sfx\\click.mp3";
         println!("{:?}", sound_path);
         let sound_file = File::open(sound_path)?;
 
@@ -87,6 +86,13 @@ impl App {
             // update move counter to clicks / 2 (as we update moves every time a pair has been clicked)
             let counter = clicks / 2;
 
+            if clicks > 10 {
+                let ae = AudioEngine::get_instance();
+                let ae_lock = ae.lock().unwrap();
+
+                ae_lock.toggle_pause();
+            }
+
             main_window.set_counter(counter);
         });
 
@@ -95,10 +101,10 @@ impl App {
             let ae = AudioEngine::get_instance();
             let ae_lock = ae.lock().unwrap();
 
-            let mut sound_path = env::current_dir().unwrap().to_string_lossy().to_string()
-            + "\\ui\\sfx\\click.mp3";
+            let mut sound_path =
+                env::current_dir().unwrap().to_string_lossy().to_string() + "\\ui\\sfx\\click.mp3";
 
-            ae_lock.decode_and_play( Path::new(&sound_path) );
+            ae_lock.decode_and_play(Path::new(&sound_path));
         });
 
         // always last

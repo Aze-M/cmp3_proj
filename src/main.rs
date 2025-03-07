@@ -12,6 +12,7 @@ slint::include_modules!();
 fn main() -> Result<()> {
     let ae = Arc::new(AudioEngine::get_instance());
     let ae_init = ae.lock().unwrap().init()?;
+    drop(ae);
 
     let app = App::run();
     if (app.is_err()) {

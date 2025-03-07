@@ -56,10 +56,15 @@ export component MainWindow inherits Window {
     title: "Match game";
     width: (74px * 3) + 64px;
     height: (74px * 3) + 96px;
+
     callback check_if_pair_solved();
     in property <bool> disable_tiles;
+
     callback increment_counter();
     callback play_sound();
+
+    callback toggle_sound();
+
     in-out property <int> clicks;
     in property <int> counter;
     in property <[TileData]> memory_tiles: [
@@ -91,6 +96,7 @@ export component MainWindow inherits Window {
                 root.check_if_pair_solved();
                 root.clicks = root.clicks + 1;
                 root.increment_counter();
+                root.toggle_sound();
             }
         }
     }
