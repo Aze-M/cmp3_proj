@@ -91,11 +91,11 @@ impl App {
                 let ae_lock = ae.lock().unwrap();
 
                 ae_lock.pause();
-                ae_lock.flushbuffer();
             } else if clicks > 20 {
                 let ae = AudioEngine::get_instance();
                 let ae_lock = ae.lock().unwrap();
-
+                
+                ae_lock.flushbuffer();
                 ae_lock.unpause();
             }
 

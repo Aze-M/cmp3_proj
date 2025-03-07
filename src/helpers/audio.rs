@@ -235,7 +235,7 @@ impl AudioEngine {
         let buffer_clone = Arc::clone(&AUDIO_BUFFER);
         let mut bcl = buffer_clone.lock().unwrap();
 
-        *bcl = Vec::new();
+        *bcl = [].to_vec();
     }
 }
 
